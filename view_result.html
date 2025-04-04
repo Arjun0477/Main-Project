@@ -1,0 +1,467 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Retinal Image Analysis - Retinal Vision{% endblock %}
+
+{% block extra_css %}
+<style>
+    .result-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 1.5rem;
+    }
+
+    .result-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .image-section {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .retinal-image {
+        width: 100%;
+        height: auto;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .image-info {
+        font-size: 0.875rem;
+        color: var(--text-light);
+        text-align: center;
+    }
+
+    .analysis-section {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .success-message {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-radius: 0.5rem;
+        color: #065f46;
+        margin-bottom: 1.5rem;
+    }
+
+    .success-message i {
+        margin-right: 0.5rem;
+        color: #059669;
+    }
+
+    .result-card {
+        background: rgba(2, 132, 199, 0.05);
+        border: 1px solid rgba(2, 132, 199, 0.1);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .result-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .result-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(2, 132, 199, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        color: var(--primary);
+    }
+
+    .result-title {
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 0.25rem;
+    }
+
+    .result-subtitle {
+        font-size: 0.875rem;
+        color: var(--text-light);
+    }
+
+    .severity-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-top: 0.5rem;
+    }
+
+    .severity-mild {
+        background: rgba(16, 185, 129, 0.1);
+        color: #065f46;
+    }
+
+    .severity-moderate {
+        background: rgba(245, 158, 11, 0.1);
+        color: #92400e;
+    }
+
+    .severity-severe {
+        background: rgba(239, 68, 68, 0.1);
+        color: #991b1b;
+    }
+
+    .result-details {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(2, 132, 199, 0.1);
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+    }
+
+    .detail-icon {
+        color: var(--primary);
+        margin-right: 0.75rem;
+        margin-top: 0.25rem;
+    }
+
+    .detail-content {
+        flex: 1;
+    }
+
+    .detail-label {
+        font-weight: 500;
+        color: var(--text);
+        margin-bottom: 0.25rem;
+    }
+
+    .detail-value {
+        font-size: 0.875rem;
+        color: var(--text-light);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .action-button {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .primary-button {
+        background: var(--primary);
+        color: white;
+        border: none;
+    }
+
+    .primary-button:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+    }
+
+    .secondary-button {
+        background: white;
+        color: var(--text);
+        border: 1px solid #e5e7eb;
+    }
+
+    .secondary-button:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .button-icon {
+        margin-right: 0.5rem;
+    }
+
+    .recommendations {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-top: 2rem;
+    }
+
+    .recommendations-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 1rem;
+    }
+
+    .recommendation-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .recommendation-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .recommendation-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .recommendation-icon {
+        width: 32px;
+        height: 32px;
+        background: rgba(2, 132, 199, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        color: var(--primary);
+        flex-shrink: 0;
+    }
+
+    .recommendation-content {
+        flex: 1;
+    }
+
+    .recommendation-title {
+        font-weight: 500;
+        color: var(--text);
+        margin-bottom: 0.25rem;
+    }
+
+    .recommendation-description {
+        font-size: 0.875rem;
+        color: var(--text-light);
+    }
+
+    .professional-assessment {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-top: 2rem;
+    }
+
+    .assessment-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .assessment-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(2, 132, 199, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        color: var(--primary);
+    }
+
+    .assessment-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .assessment-form {
+        margin-top: 1rem;
+    }
+
+    .assessment-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .assessment-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+        outline: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="result-container">
+    <h1 class="page-title">Retinal Image Analysis</h1>
+
+    <div class="result-grid">
+        <div class="image-section">
+            <img src="{{ image.url }}" alt="Retinal scan" class="retinal-image">
+            <div class="image-info">
+                Uploaded on {{ image.uploaded_at|date:"F j, Y, g:i a" }}
+            </div>
+        </div>
+
+        <div class="analysis-section">
+            <div class="success-message">
+                <i class="fas fa-check-circle"></i>
+                Image uploaded and analyzed successfully!
+            </div>
+
+            <div class="result-card">
+                <div class="result-header">
+                    <div class="result-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div>
+                        <div class="result-title">AI Analysis Results</div>
+                        <div class="result-subtitle">Powered by advanced deep learning</div>
+                    </div>
+                </div>
+
+                <div class="severity-indicator severity-{{ severity|lower }}">
+                    <i class="fas fa-circle mr-2"></i>
+                    {{ severity }} Diabetic Retinopathy
+                </div>
+
+                <div class="result-details">
+                    <div class="detail-item">
+                        <div class="detail-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="detail-content">
+                            <div class="detail-label">Severity Level</div>
+                            <div class="detail-value">{{ severity }}</div>
+                        </div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-icon">
+                            <i class="fas fa-tag"></i>
+                        </div>
+                        <div class="detail-content">
+                            <div class="detail-label">Classification</div>
+                            <div class="detail-value">{{ classification }}</div>
+                        </div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="detail-content">
+                            <div class="detail-label">Confidence Score</div>
+                            <div class="detail-value">{{ confidence_score }}%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <a href="{% url 'download_report' image.id %}" class="action-button primary-button">
+                    <i class="fas fa-download button-icon"></i>
+                    Download Report
+                </a>
+                <a href="{% url 'schedule_appointment' %}" class="action-button secondary-button">
+                    <i class="fas fa-calendar-plus button-icon"></i>
+                    Schedule Consultation
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="recommendations">
+        <h2 class="recommendations-title">Recommendations</h2>
+        <ul class="recommendation-list">
+            <li class="recommendation-item">
+                <div class="recommendation-icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="recommendation-content">
+                    <div class="recommendation-title">Regular Check-ups</div>
+                    <div class="recommendation-description">
+                        Schedule regular eye examinations to monitor your condition and prevent progression.
+                    </div>
+                </div>
+            </li>
+            <li class="recommendation-item">
+                <div class="recommendation-icon">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+                <div class="recommendation-content">
+                    <div class="recommendation-title">Blood Sugar Control</div>
+                    <div class="recommendation-description">
+                        Maintain good blood sugar control through diet, exercise, and medication as prescribed.
+                    </div>
+                </div>
+            </li>
+            <li class="recommendation-item">
+                <div class="recommendation-icon">
+                    <i class="fas fa-user-md"></i>
+                </div>
+                <div class="recommendation-content">
+                    <div class="recommendation-title">Professional Consultation</div>
+                    <div class="recommendation-description">
+                        Consult with an eye specialist for a comprehensive evaluation and treatment plan.
+                    </div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    {% if user.is_doctor %}
+    <div class="professional-assessment">
+        <div class="assessment-header">
+            <div class="assessment-icon">
+                <i class="fas fa-stethoscope"></i>
+            </div>
+            <div class="assessment-title">Professional Assessment</div>
+        </div>
+
+        <form method="POST" class="assessment-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="assessment" class="form-label">Add your professional assessment</label>
+                <textarea name="assessment" id="assessment" class="assessment-input" placeholder="Enter your professional assessment and recommendations..."></textarea>
+            </div>
+            <button type="submit" class="action-button primary-button mt-4">
+                <i class="fas fa-save button-icon"></i>
+                Save Assessment
+            </button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

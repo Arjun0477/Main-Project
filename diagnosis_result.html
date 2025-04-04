@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Diagnosis Result - Retinal Vision{% endblock %}
+
+{% block content %}
+<div class="page-transition max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Image and AI Analysis -->
+        <div class="medical-card">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Retinal Image Analysis</h2>
+            
+            <!-- Image Preview -->
+            <div class="text-center mb-6">
+                <div class="relative rounded-lg overflow-hidden shadow-lg mb-4">
+                    <img src="{{ diagnosis.image.url }}" class="w-full h-auto" alt="Retinal Image">
+                    <div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white px-4 py-2 text-sm">
+                        <i class="fas fa-calendar-alt mr-2"></i>
+                        {{ diagnosis.created_at|date:"F j, Y, g:i a" }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI Analysis Results -->
+            <div class="result-card {% if diagnosis.severity == 'high' %}severe{% elif diagnosis.severity == 'medium' %}moderate{% else %}mild{% endif %} mb-6">
+                <div class="flex items-center mb-4">
+                    <i class="fas fa-robot text-2xl mr-3 text-blue-500"></i>
+                    <h3 class="text-xl font-semibold">AI Analysis Results</h3>
+                </div>
+                <div class="space-y-2">
+                    <p class="flex items-center">
+                        <span class="font-medium mr-2">Severity Level:</span>
+                        <span class="px-3 py-1 rounded-full text-sm font-medium
+                            {% if diagnosis.severity == 'high' %}bg-red-100 text-red-800
+                            {% elif diagnosis.severity == 'medium' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-green-100 text-green-800{% endif %}">
+                            {{ diagnosis.get_severity_display }}
+                        </span>
+                    </p>
+                    <p class="flex items-center">
+                        <span class="font-medium mr-2">Confidence Score:</span>
+                        <div class="w-full max-w-xs bg-gray-200 rounded-full h-2.5">
+                            <div class="h-2.5 rounded-full {% if diagnosis.severity == 'high' %}bg-red-500{% elif diagnosis.severity == 'medium' %}bg-yellow-500{% else %}bg-green-500{% endif %}"
+                                style="width: {{ diagnosis.confidence_score }}%"></div>
+                        </div>
+                        <span class="ml-2">{{ diagnosis.confidence_score }}%</span>
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Patient Notes -->
+            {% if diagnosis.patient_notes %}
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="text-lg font-semibold mb-2">Patient Notes</h4>
+                    <p class="text-gray-700">{{ diagnosis.patient_notes }}</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Doctor's Diagnosis -->
+        <div class="medical-card">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Professional Diagnosis</h2>
+            
+            {% if user.user_type == 'doctor' and not diagnosis.doctor_diagnosis %}
+                <form method="POST" class="space-y-6">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <button type="submit" class="diagnosis-button w-full">
+                        <i class="fas fa-save mr-2"></i>Submit Diagnosis
+                    </button>
+                </form>
+            {% elif diagnosis.doctor_diagnosis %}
+                <div class="space-y-6">
+                    <div class="flex items-center space-x-4">
+                        {% if diagnosis.doctor.profile_picture %}
+                            <img src="{{ diagnosis.doctor.profile_picture.url }}" class="w-16 h-16 rounded-full object-cover">
+                        {% else %}
+                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user-md text-2xl text-blue-500"></i>
+                            </div>
+                        {% endif %}
+                        <div>
+                            <h3 class="text-xl font-semibold">Dr. {{ diagnosis.doctor.get_full_name }}</h3>
+                            <p class="text-gray-600">{{ diagnosis.doctor.specialization }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="result-card space-y-4">
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2">Diagnosis</h4>
+                            <p class="text-gray-700">{{ diagnosis.doctor_diagnosis }}</p>
+                        </div>
+                        <hr class="border-gray-200">
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2">Recommendations</h4>
+                            <p class="text-gray-700">{{ diagnosis.recommendations }}</p>
+                        </div>
+                    </div>
+                    
+                    <p class="text-gray-600">
+                        <i class="fas fa-clock mr-2"></i>
+                        Diagnosed on {{ diagnosis.diagnosed_at|date:"F j, Y, g:i a" }}
+                    </p>
+                    
+                    <!-- Actions -->
+                    <div class="space-y-3">
+                        <a href="{% url 'download_report' diagnosis.id %}" class="diagnosis-button block text-center">
+                            <i class="fas fa-download mr-2"></i>Download Report
+                        </a>
+                        {% if user.user_type == 'patient' %}
+                            <a href="{% url 'create_chat_room' %}?doctor={{ diagnosis.doctor.id }}" 
+                               class="block text-center px-6 py-3 rounded-full border-2 border-blue-500 text-blue-500 font-semibold hover:bg-blue-50 transition-all duration-300">
+                                <i class="fas fa-comments mr-2"></i>Chat with Doctor
+                            </a>
+                            <a href="{% url 'schedule_appointment' %}?doctor={{ diagnosis.doctor.id }}"
+                               class="block text-center px-6 py-3 rounded-full border-2 border-blue-500 text-blue-500 font-semibold hover:bg-blue-50 transition-all duration-300">
+                                <i class="fas fa-calendar-plus mr-2"></i>Schedule Appointment
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-user-md text-3xl text-blue-500"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Awaiting Doctor's Diagnosis</h3>
+                    <p class="text-gray-600">A qualified doctor will review your results soon.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Similar Cases -->
+    {% if similar_cases %}
+    <div class="medical-card mt-8">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">Similar Cases</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for case in similar_cases %}
+                <div class="result-card hover:shadow-lg transition-all duration-300">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-lg font-semibold">Case #{{ case.id }}</h4>
+                        <span class="text-gray-500 text-sm">{{ case.created_at|date:"F j, Y" }}</span>
+                    </div>
+                    <div class="space-y-2">
+                        <p class="flex items-center justify-between">
+                            <span class="text-gray-600">Severity:</span>
+                            <span class="px-3 py-1 rounded-full text-sm font-medium
+                                {% if case.severity == 'high' %}bg-red-100 text-red-800
+                                {% elif case.severity == 'medium' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-green-100 text-green-800{% endif %}">
+                                {{ case.get_severity_display }}
+                            </span>
+                        </p>
+                        <p class="flex items-center justify-between">
+                            <span class="text-gray-600">Confidence:</span>
+                            <span class="font-medium">{{ case.confidence_score }}%</span>
+                        </p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 
